@@ -1,0 +1,49 @@
+name: Run Darling Cloud Server
+
+on:
+  push:
+  schedule:
+    - cron: '0 */4 * * *'
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    concurrency:
+      group: darling-cloud-server
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start Darling Cloud Server
+        run: |
+          chmod +x bin/darling-cloud bin/frpc
+          cd bin
+          nohup ./darling-cloud > server.log 2>&1 &
+          sleep 2
+          echo "Server started"
+          cat server.log || true
+
+      - name: Start ChmlFrp tunnel
+        run: |
+          cd bin
+          nohup ./frpc -u wEx9KAA67lhn7ps3xRbH7UCr -p 356575 > frpc.log 2>&1 &
+          sleep 3
+          echo "Frpc started"
+          cat frpc.log || true
+
+      - name: Keep alive
+        run: |
+          echo "Running for 5 hours..."
+          for i in $(seq 1 300); do
+            sleep 60
+            if ! pgrep -f "darling-cloud" > /dev/null; then
+              echo "Server died, restarting..."
+              cd bin && ./darling-cloud >> server.log 2>&1 &
+            fi
+            if ! pgrep -f "frpc -u" > /dev/null; then
+              echo "Frpc died, restarting..."
+              cd bin && ./frpc -u wEx9KAA67lhn7ps3xRbH7UCr -p 356575 >> frpc.log 2>&1 &
+            fi
+          done
