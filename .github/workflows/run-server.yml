@@ -19,11 +19,16 @@ jobs:
       - name: Start Darling Cloud Server
         run: |
           chmod +x bin/darling-cloud bin/frpc
+          mkdir -p bin/log
           cd bin
           nohup ./darling-cloud > server.log 2>&1 &
           sleep 2
           echo "Server started"
           cat server.log || true
+          echo "=== log dir ==="
+          ls -la log/ 2>/dev/null || echo "no log dir"
+          echo "=== listening ==="
+          ss -ulnp | grep 29872 || echo "not listening"
 
       - name: Start ChmlFrp tunnel
         run: |
