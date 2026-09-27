@@ -9,10 +9,10 @@ on:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 330
+    timeout-minutes: 250
     concurrency:
       group: darling-cloud-server
-      cancel-in-progress: false
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
 
@@ -35,8 +35,8 @@ jobs:
 
       - name: Keep alive
         run: |
-          echo "Running for 5 hours..."
-          for i in $(seq 1 300); do
+          echo "Running for ~4 hours..."
+          for i in $(seq 1 230); do
             sleep 60
             if ! pgrep -f "darling-cloud" > /dev/null; then
               echo "Server died, restarting..."
