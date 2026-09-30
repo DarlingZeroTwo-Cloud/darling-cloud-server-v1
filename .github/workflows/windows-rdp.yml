@@ -10,23 +10,21 @@ jobs:
     steps:
       - name: Create user and enable RDP
         run: |
-          net user darling "Darling02!" /add
+          $password = "Rdp@2026X"
+          net user darling $password /add
           net localgroup administrators darling /add
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          Write-Host "RDP ready. User: darling, Password: Darling02!"
+          Write-Host "RDP ready. User: darling, Password: Rdp@2026X"
 
-      - name: Install Tailscale
-        run: |
-          $tsUrl = "https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe"
-          Invoke-WebRequest -Uri $tsUrl -OutFile "$env:TEMP\tailscale-setup.exe"
-          Start-Process -Wait -FilePath "$env:TEMP\tailscale-setup.exe" -ArgumentList "/silent"
-          Write-Host "Tailscale installed"
-
-      - name: Login to Tailscale (wait for browser auth)
+      - name: Install and login Tailscale
         run: |
           $env:Path = "C:\Program Files\Tailscale;$env:Path"
+          Set-ExecutionPolicy Bypass -Scope Process -Force
+          [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+          iex ((New-Object System.Net.WebClient).DownloadString('https://tailscale.com/install.ps1'))
+          Write-Host "=== Tailscale installed, starting login ==="
           tailscale up --hostname=darling-windows --accept-routes
           Write-Host "=== Tailscale logged in! ==="
           tailscale ip -4
@@ -36,7 +34,7 @@ jobs:
           $env:Path = "C:\Program Files\Tailscale;$env:Path"
           Write-Host "RDP ready!"
           Write-Host "User: darling"
-          Write-Host "Password: Darling02!"
+          Write-Host "Password: Rdp@2026X"
           tailscale ip -4
           for ($i = 0; $i -lt 290; $i++) {
             Start-Sleep -Seconds 60
