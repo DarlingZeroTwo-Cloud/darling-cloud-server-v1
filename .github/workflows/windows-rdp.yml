@@ -2,40 +2,48 @@ name: Windows RDP via Tailscale
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 */4 * * *'
+  push:
 
 jobs:
   rdp:
     runs-on: windows-latest
-    timeout-minutes: 300
+    timeout-minutes: 250
+    concurrency:
+      group: darling-windows-rdp
+      cancel-in-progress: true
     steps:
       - name: Create user and enable RDP
         run: |
           $password = "Rdp@2026X"
-          net user darling $password /add
-          net localgroup administrators darling /add
+          net user darling $password /add 2>$null
+          net user darling $password /active:yes
+          net localgroup administrators darling /add 2>$null
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
           Write-Host "RDP ready. User: darling, Password: Rdp@2026X"
 
-      - name: Install and login Tailscale
+      - name: Install and login Tailscale with auth-key
         run: |
+          $tsUrl = "https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe"
+          Invoke-WebRequest -Uri $tsUrl -OutFile "$env:TEMP\tailscale-setup.exe"
+          Start-Process -Wait -FilePath "$env:TEMP\tailscale-setup.exe" -ArgumentList "/silent"
           $env:Path = "C:\Program Files\Tailscale;$env:Path"
-          Set-ExecutionPolicy Bypass -Scope Process -Force
-          [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-          iex ((New-Object System.Net.WebClient).DownloadString('https://tailscale.com/install.ps1'))
-          Write-Host "=== Tailscale installed, starting login ==="
-          tailscale up --hostname=darling-windows --accept-routes
+          Write-Host "=== Tailscale installed, logging in with auth-key ==="
+          tailscale up --auth-key=tskey-auth-kHjUv1t87421CNTRL-R9pKH68KsKjHxhjyzLYZKj4wwXfCMEEz --hostname=darling-windows --accept-routes
           Write-Host "=== Tailscale logged in! ==="
           tailscale ip -4
 
-      - name: Keep alive for 5 hours
+      - name: Keep alive
         run: |
           $env:Path = "C:\Program Files\Tailscale;$env:Path"
-          Write-Host "RDP ready!"
-          Write-Host "User: darling"
-          Write-Host "Password: Rdp@2026X"
+          Write-Host "=== READY ==="
+          Write-Host "RDP User: darling"
+          Write-Host "RDP Password: Rdp@2026X"
+          Write-Host "Tailscale IP:"
           tailscale ip -4
-          for ($i = 0; $i -lt 290; $i++) {
+          for ($i = 0; $i -lt 230; $i++) {
             Start-Sleep -Seconds 60
           }
