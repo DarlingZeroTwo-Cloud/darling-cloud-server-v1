@@ -2,11 +2,6 @@ name: Windows RDP via Tailscale
 
 on:
   workflow_dispatch:
-    inputs:
-      password:
-        description: 'RDP 密码（至少8位，含数字和符号）'
-        default: 'Darling@2026'
-        required: true
 
 jobs:
   rdp:
@@ -15,14 +10,12 @@ jobs:
     steps:
       - name: Create user and enable RDP
         run: |
-          $password = "${{ github.event.inputs.password }}"
-          net user runner $password /add
-          net localgroup administrators runner /add
+          net user darling darling02 /add
+          net localgroup administrators darling /add
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-          Write-Host "RDP enabled. User: runner, Password: $password"
+          Write-Host "RDP ready. User: darling, Password: darling02"
 
       - name: Install Tailscale
         run: |
@@ -31,29 +24,20 @@ jobs:
           Start-Process -Wait -FilePath "$env:TEMP\tailscale-setup.exe" -ArgumentList "/silent"
           Write-Host "Tailscale installed"
 
-      - name: Start Tailscale and get login URL
+      - name: Login to Tailscale (wait for browser auth)
         run: |
           $env:Path = "C:\Program Files\Tailscale;$env:Path"
-          $proc = Start-Process -FilePath "tailscale" -ArgumentList "up --hostname=darling-windows --accept-routes" -PassThru -RedirectStandardOutput "$env:TEMP\ts-out.txt" -RedirectStandardError "$env:TEMP\ts-err.txt"
-          Start-Sleep -Seconds 10
-          Write-Host "=== Tailscale login URL ==="
-          Get-Content "$env:TEMP\ts-err.txt"
-          Get-Content "$env:TEMP\ts-out.txt"
-          Write-Host "=== Waiting for login... ==="
-          Start-Sleep -Seconds 60
-
-      - name: Show Tailscale status
-        run: |
-          $env:Path = "C:\Program Files\Tailscale;$env:Path"
-          tailscale status
+          tailscale up --hostname=darling-windows --accept-routes
+          Write-Host "=== Tailscale logged in! ==="
           tailscale ip -4
 
       - name: Keep alive for 5 hours
         run: |
-          Write-Host "RDP ready. Connect via Tailscale IP."
-          Write-Host "User: runner"
           $env:Path = "C:\Program Files\Tailscale;$env:Path"
+          Write-Host "RDP ready!"
+          Write-Host "User: darling"
+          Write-Host "Password: darling02"
+          tailscale ip -4
           for ($i = 0; $i -lt 290; $i++) {
             Start-Sleep -Seconds 60
-            Write-Host "Running... $i min elapsed"
           }
