@@ -10,12 +10,12 @@ jobs:
     steps:
       - name: Create user and enable RDP
         run: |
-          net user darling darling02 /add
+          net user darling "Darling02!" /add
           net localgroup administrators darling /add
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          Write-Host "RDP ready. User: darling, Password: darling02"
+          Write-Host "RDP ready. User: darling, Password: Darling02!"
 
       - name: Install Tailscale
         run: |
@@ -36,7 +36,7 @@ jobs:
           $env:Path = "C:\Program Files\Tailscale;$env:Path"
           Write-Host "RDP ready!"
           Write-Host "User: darling"
-          Write-Host "Password: darling02"
+          Write-Host "Password: Darling02!"
           tailscale ip -4
           for ($i = 0; $i -lt 290; $i++) {
             Start-Sleep -Seconds 60
