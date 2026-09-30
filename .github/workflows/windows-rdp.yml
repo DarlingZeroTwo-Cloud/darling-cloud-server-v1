@@ -36,6 +36,14 @@ jobs:
           Write-Host "=== Tailscale logged in! ==="
           tailscale ip -4
 
+      - name: Install UU Remote
+        run: |
+          winget install --id NetEase.UURemote --exact --silent --accept-package-agreements --accept-source-agreements
+          Write-Host "UU Remote installed"
+          Start-Sleep -Seconds 10
+          Write-Host "=== UU Remote process ==="
+          Get-Process | Where-Object { $_.Name -like "*uu*" -or $_.Name -like "*UU*" } | Format-Table Name, Id
+
       - name: Keep alive
         run: |
           $env:Path = "C:\Program Files\Tailscale;$env:Path"
