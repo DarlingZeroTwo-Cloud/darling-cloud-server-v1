@@ -45,6 +45,16 @@ jobs:
           echo "EasyTier client started"
           cat client.log || true
 
+      - name: Start Cloudreve
+        run: |
+          cd bin
+          chmod +x cloudreve
+          nohup ./cloudreve > cloudreve.log 2>&1 &
+          sleep 5
+          echo "Cloudreve started"
+          cat cloudreve.log || true
+          ss -tlnp | grep 5212 || echo "cloudreve not listening"
+
       - name: Keep alive
         run: |
           echo "Running for ~4 hours..."
@@ -61,5 +71,9 @@ jobs:
             if ! pgrep -f "frpc -u" > /dev/null; then
               echo "Frpc died, restarting..."
               cd bin && ./frpc -u wEx9KAA67lhn7ps3xRbH7UCr -p 356575 >> frpc.log 2>&1 &
+            fi
+            if ! pgrep -f "cloudreve" > /dev/null; then
+              echo "Cloudreve died, restarting..."
+              cd bin && ./cloudreve >> cloudreve.log 2>&1 &
             fi
           done
