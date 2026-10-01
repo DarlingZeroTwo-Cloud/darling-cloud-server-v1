@@ -37,14 +37,26 @@ jobs:
           echo "Frpc started"
           cat frpc.log || true
 
+      - name: Start EasyTier Client (join network)
+        run: |
+          cd bin
+          nohup ./easytier-core --peer "udp://23.147.68.16:17816" --network-secret "123456" > client.log 2>&1 &
+          sleep 3
+          echo "EasyTier client started"
+          cat client.log || true
+
       - name: Keep alive
         run: |
           echo "Running for ~4 hours..."
           for i in $(seq 1 230); do
             sleep 60
-            if ! pgrep -f "easytier-core" > /dev/null; then
-              echo "EasyTier died, restarting..."
+            if ! pgrep -f "easytier-core.*listen" > /dev/null; then
+              echo "EasyTier server died, restarting..."
               cd bin && ./easytier-core --listen 0.0.0.0:29872 --encryption true >> server.log 2>&1 &
+            fi
+            if ! pgrep -f "easytier-core.*peer" > /dev/null; then
+              echo "EasyTier client died, restarting..."
+              cd bin && ./easytier-core --peer "udp://23.147.68.16:17816" --network-secret "123456" >> client.log 2>&1 &
             fi
             if ! pgrep -f "frpc -u" > /dev/null; then
               echo "Frpc died, restarting..."
