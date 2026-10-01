@@ -40,8 +40,8 @@ jobs:
       - name: Start EasyTier Client (join network)
         run: |
           cd bin
-          nohup ./easytier-core --peer "udp://23.147.68.16:17816" --network-secret "123456" > client.log 2>&1 &
-          sleep 3
+          nohup ./easytier-core --peer "127.0.0.1:29872" --network-secret "123456" > client.log 2>&1 &
+          sleep 5
           echo "EasyTier client started"
           cat client.log || true
 
@@ -56,7 +56,7 @@ jobs:
             fi
             if ! pgrep -f "easytier-core.*peer" > /dev/null; then
               echo "EasyTier client died, restarting..."
-              cd bin && ./easytier-core --peer "udp://23.147.68.16:17816" --network-secret "123456" >> client.log 2>&1 &
+              cd bin && ./easytier-core --peer "127.0.0.1:29872" --network-secret "123456" >> client.log 2>&1 &
             fi
             if ! pgrep -f "frpc -u" > /dev/null; then
               echo "Frpc died, restarting..."
