@@ -44,6 +44,12 @@ jobs:
           sleep 5
           echo "EasyTier client started"
           cat client.log || true
+          echo "=== server log ==="
+          cat server.log || true
+          echo "=== node list ==="
+          sleep 5
+          ./easytier-cli peer 2>/dev/null || echo "cli failed"
+          ./easytier-node 2>/dev/null || echo "node cmd failed"
 
       - name: Keep alive
         run: |
