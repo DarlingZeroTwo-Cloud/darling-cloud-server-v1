@@ -1,4 +1,4 @@
-name: Run Darling Cloud Server
+name: Run Darling Cloud Server (EasyTier)
 
 on:
   push:
@@ -16,19 +16,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Start Darling Cloud Server
+      - name: Start EasyTier Server
         run: |
-          chmod +x bin/darling-cloud bin/frpc
+          chmod +x bin/easytier-core bin/frpc
           mkdir -p bin/log
           cd bin
-          nohup ./darling-cloud > server.log 2>&1 &
-          sleep 2
-          echo "Server started"
+          nohup ./easytier-core --listen 0.0.0.0:29872 --encryption true > server.log 2>&1 &
+          sleep 3
+          echo "EasyTier started"
           cat server.log || true
-          echo "=== log dir ==="
-          ls -la log/ 2>/dev/null || echo "no log dir"
           echo "=== listening ==="
           ss -ulnp | grep 29872 || echo "not listening"
+          ss -tlnp | grep 29872 || echo "tcp not listening"
 
       - name: Start ChmlFrp tunnel
         run: |
@@ -43,9 +42,9 @@ jobs:
           echo "Running for ~4 hours..."
           for i in $(seq 1 230); do
             sleep 60
-            if ! pgrep -f "darling-cloud" > /dev/null; then
-              echo "Server died, restarting..."
-              cd bin && ./darling-cloud >> server.log 2>&1 &
+            if ! pgrep -f "easytier-core" > /dev/null; then
+              echo "EasyTier died, restarting..."
+              cd bin && ./easytier-core --listen 0.0.0.0:29872 --encryption true >> server.log 2>&1 &
             fi
             if ! pgrep -f "frpc -u" > /dev/null; then
               echo "Frpc died, restarting..."
