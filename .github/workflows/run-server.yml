@@ -21,12 +21,12 @@ jobs:
           chmod +x bin/easytier-core bin/frpc
           mkdir -p bin/log
           cd bin
-          nohup ./easytier-core --listen 0.0.0.0:29872 --encryption true > server.log 2>&1 &
+          nohup ./easytier-core -l 29872 > server.log 2>&1 &
           sleep 3
-          echo "EasyTier started"
+          echo "EasyTier server started"
           cat server.log || true
           echo "=== listening ==="
-          ss -ulnp | grep 29872 || echo "not listening"
+          ss -ulnp | grep 29872 || echo "udp not listening"
           ss -tlnp | grep 29872 || echo "tcp not listening"
 
       - name: Start ChmlFrp tunnel
@@ -44,23 +44,17 @@ jobs:
           sleep 5
           echo "EasyTier client started"
           cat client.log || true
-          echo "=== server log ==="
-          cat server.log || true
-          echo "=== node list ==="
-          sleep 5
-          ./easytier-cli peer 2>/dev/null || echo "cli failed"
-          ./easytier-node 2>/dev/null || echo "node cmd failed"
 
       - name: Keep alive
         run: |
           echo "Running for ~4 hours..."
           for i in $(seq 1 230); do
             sleep 60
-            if ! pgrep -f "easytier-core.*listen" > /dev/null; then
+            if ! pgrep -f "easytier-core.*-l 29872" > /dev/null; then
               echo "EasyTier server died, restarting..."
-              cd bin && ./easytier-core --listen 0.0.0.0:29872 --encryption true >> server.log 2>&1 &
+              cd bin && ./easytier-core -l 29872 >> server.log 2>&1 &
             fi
-            if ! pgrep -f "easytier-core.*peer" > /dev/null; then
+            if ! pgrep -f "easytier-core.*--peer" > /dev/null; then
               echo "EasyTier client died, restarting..."
               cd bin && ./easytier-core --peer "127.0.0.1:29872" --network-secret "123456" >> client.log 2>&1 &
             fi
